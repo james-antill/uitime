@@ -420,21 +420,24 @@ func init() {
 
 func cotime(local *bool, short *string, pduration *time.Duration,
             now time.Time, datetime time.Time) {
-    if !*local && *short == "" {
+    if !*local && *short == "" { // Print our default list
         deftime(now, datetime, *pduration)
-    } else if !*local {
-        tzs := []string{*short,
-                        "UTC"}
-        alltime(now, datetime, *pduration, tzs)
-    } else if *short == "" {
-        tzs := []string{"Local",
-                        "UTC"}
-        alltime(now, datetime, *pduration, tzs)
-    } else {
-        tzs := []string{*short, "Local",
-                        "UTC"}
-        alltime(now, datetime, *pduration, tzs)
+        return
     }
+
+    // Print a user specified list, and UTC:
+    tzs := []string{"UTC"}
+
+    if *local {
+        tzs = append(tzs, "Local")
+    }
+    if *short != "" {
+        for _, data := range strings.Split(*short, ",") {
+            tzs = append(tzs, data)
+        }
+    }
+
+    alltime(now, datetime, *pduration, tzs)
 }
 
 func main() {
