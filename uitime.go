@@ -208,6 +208,18 @@ func ptime(now time.Time, datetime string) time.Time {
         }
     }
 
+    // 7. Inherit the loc/time, parsing the dayname work out the date.
+    fmts = []string{"Monday"}
+    for _, tfmt := range fmts {
+        _, ok := time.Parse(tfmt, datetime)
+        if ok == nil {
+            ctm := time.Date(now.Year(), now.Month(), now.Day(),
+                             now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
+                             now.Location())
+            return calc_weekday(datetime, ctm)
+        }
+    }
+
     fmt.Fprintln(os.Stderr, "Error: Couldn't parse time string:", datetime)
     return time.Now()
 }
