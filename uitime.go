@@ -227,6 +227,10 @@ func ptime(now time.Time, datetime string) time.Time {
 func hdr(val string, title string, width int) string {
     dashes := width - len(title)
     dashes -= 2
+    if dashes < 2 {
+        dashes = 2
+    }
+
     beg_dashes := dashes / 2
     end_dashes := dashes - beg_dashes
     return fmt.Sprintf("%s %s %s",
