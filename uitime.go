@@ -240,6 +240,7 @@ var dec_output_flag bool
 var debug_flag bool
 var isoweek_output_flag bool
 var sec_output_flag bool
+var terminal_width int
 
 func term_width() int {
     width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
@@ -252,7 +253,11 @@ func term_width() int {
 
 func _otime(now time.Time, tm time.Time, tz string, lastday int) int {
     nowtz, _ := now.Zone()
-    width := term_width()
+
+    width := terminal_width
+    if width <= 0 {
+        width = term_width()
+    }
 
     // Print headers ... 
     if lastday == -1 {
@@ -428,6 +433,7 @@ func init() {
     flag.BoolVar(&debug_flag, "debug", false, "Print debugging output")
     flag.BoolVar(&isoweek_output_flag, "week", false, "Hdr includes week")
     flag.BoolVar(&sec_output_flag, "seconds", false, "Show seconds in output")
+    flag.IntVar(&terminal_width, "width", 0, "Size of terminal (default: auto)")
 }
 
 func cotime(local *bool, short *string, pduration *time.Duration,
