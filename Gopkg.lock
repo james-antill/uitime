@@ -1,0 +1,31 @@
+memo = "98b9faed3ac2ed6c449b26fec39b19fc5b5ec22fba487754e8387279e8a8a227"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/fatih/color"
+  packages = ["."]
+  revision = "9131ab34cf20d2f6d83fdc67168a5430d1c7dc23"
+
+[[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "d228849504861217f796da67fae4f6e347643f15"
+  version = "v0.0.7"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
+  version = "v0.0.2"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "3cb07270c9455e8ad27956a70891c962d121a228"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "ea9bcade75cb975a0b9738936568ab388b845617"
