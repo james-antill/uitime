@@ -378,7 +378,7 @@ func cmp(tmi1, tmi2 TMInfo) int {
     if tm1.Second() < tm2.Second() { return -1 }
     if tm1.Second() > tm2.Second() { return  1 }
 
-    if tmi1.TZ < tmi1.TZ { return -1 }
+    if tmi1.TZ < tmi2.TZ { return -1 }
     if tmi1.TZ > tmi2.TZ { return  1 }
 
     return 0
