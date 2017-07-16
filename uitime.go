@@ -380,10 +380,8 @@ func alltime(now time.Time, datetime time.Time, duration time.Duration, tzs []st
 
     for _, tz := range tzs {
         loc, ok := time.LoadLocation(tz)
-        if ok != ok {
-            if debug_flag {
-                fmt.Fprintln(os.Stderr, "JDBG:", "Can't find:", tz)
-            }
+        if ok != nil {
+            fmt.Fprintln(os.Stderr, "Warning:", ok)
             continue
         }
 
