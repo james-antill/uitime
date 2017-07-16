@@ -69,15 +69,15 @@ func ptime(now time.Time, datetime string) time.Time {
     // 2. Inherit the loc, parsing a full date/time.
     fmts = []string{"2006-01-02 15:04", "2006-01-02 15:04:05",
                     "2006-01-02T15:04", "2006-01-02T15:04:05",
-                    time.Stamp, time.ANSIC, 
+                    time.Stamp, time.ANSIC,
                     "02 Jan 06 15:04", "Monday, 02-Jan-06 15:04:05",
                     "Mon, 02 Jan 2006 15:04:05"}
     for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
+        tfmt += " MST"
+        tdatetime := datetime + now.Format(" MST")
+        tm, ok := time.Parse(tfmt, tdatetime)
         if ok == nil {
-            return time.Date(tm.Year(), tm.Month(), tm.Day(), 
-                             tm.Hour(), tm.Minute(), tm.Second(), now.Nanosecond(),
-                             now.Location())
+            return tm
         }
     }
 
@@ -85,10 +85,10 @@ func ptime(now time.Time, datetime string) time.Time {
     fmts = []string{"2006-01-02 MST", "Jan _2 2006 MST", "Jan 02 2006 MST",
                     "2006-01-02Z07:00", "Jan _2 2006Z07:00", "Jan 02 2006Z07:00",
                     "2006-01-02 -0700", "Jan _2 2006 -0700", "Jan 02 2006 -0700"}
-    for _, tfmt := range fmts {
+    for _, tfmt := range fmts { // Probably doesn't work right, at weird times
         tm, ok := time.Parse(tfmt, datetime)
         if ok == nil {
-            return time.Date(tm.Year(), tm.Month(), tm.Day(), 
+            return time.Date(tm.Year(), tm.Month(), tm.Day(),
                              now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
                              tm.Location())
         }
@@ -97,11 +97,11 @@ func ptime(now time.Time, datetime string) time.Time {
     // 4. Inherit the time/loc, parsing the date.
     fmts = []string{"2006-01-02", "Jan _2 2006", "Jan 02 2006"}
     for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
+        tfmt += " 15:04:05.999999999 MST"
+        tdatetime := datetime + now.Format(" 15:04:05.999999999 MST")
+        tm, ok := time.Parse(tfmt, tdatetime)
         if ok == nil {
-            return time.Date(tm.Year(), tm.Month(), tm.Day(), 
-                             now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
-                             now.Location())
+            return tm
         }
     }
 
@@ -110,101 +110,91 @@ func ptime(now time.Time, datetime string) time.Time {
                     time.Kitchen + "Z07:00", "15:04:05Z07:00", "15:04Z07:00",
                     time.Kitchen + " -0700", "15:04:05 -0700", "15:04 -0700"}
     for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
+        tfmt = "2006-01-02 " + tfmt
+        tdatetime := now.Format("2006-01-02 ") + datetime
+        tm, ok := time.Parse(tfmt, tdatetime)
         if ok == nil {
-            return time.Date(now.Year(), now.Month(), now.Day(), 
-                             tm.Hour(), tm.Minute(), tm.Second(), now.Nanosecond(),
-                             tm.Location())
+            return tm
         }
     }
 
     // 6. Inherit the date/loc, parsing the time.
     fmts = []string{time.Kitchen, "15:04:05", "15:04"}
     for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
+        tfmt = "2006-01-02 " + tfmt + " MST"
+        tdatetime := now.Format("2006-01-02 ") + datetime + now.Format(" MST")
+        tm, ok := time.Parse(tfmt, tdatetime)
         if ok == nil {
-            return time.Date(now.Year(), now.Month(), now.Day(), 
-                             tm.Hour(), tm.Minute(), tm.Second(), now.Nanosecond(),
-                             now.Location())
+            return tm
         }
     }
 
     // Now, for bits:
     // 1. Inherit the year/time, parsing the month-day/loc.
-    fmts = []string{"01-02 MST", "Jan _2 MST", "Jan 02 MST",
-                    "01-02Z07:00", "Jan _2Z07:00", "Jan 02Z07:00",
-                    "01-02 -0700", "Jan _2 -0700", "Jan 02 -0700"}
-    for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
-        if ok == nil {
-            return time.Date(now.Year(), tm.Month(), tm.Day(), 
-                             now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
-                             tm.Location())
-        }
-    }
 
     // 2. Inherit the year/time/loc, parsing the month-day.
     fmts = []string{"01-02", "Jan _2", "Jan 02"}
     for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
+        time_fmt := " 15:04:05.999999999 MST"
+        tfmt1 := "2006-" + tfmt + time_fmt
+        tdatetime1 := now.Format("2006-") + datetime + now.Format(time_fmt)
+        tm1, ok := time.Parse(tfmt1, tdatetime1)
         if ok == nil {
-            return time.Date(now.Year(), tm.Month(), tm.Day(), 
-                             now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
-                             now.Location())
+            return tm1
+        }
+
+        tfmt2 := tfmt + " 2006" + time_fmt
+        tdatetime2 := datetime + now.Format(" 2006" + time_fmt)
+        tm2, ok := time.Parse(tfmt2, tdatetime2)
+        if ok == nil {
+            return tm2
         }
     }
 
     // 3. Inherit the year-month/time, parsing the day/loc.
-    fmts = []string{"02 MST", "_2 MST",
-                    "02Z07:00", "_2Z07:00",
-                    "02 -0700", "_2 -0700"}
-    for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
-        if ok == nil {
-            return time.Date(now.Year(), now.Month(), tm.Day(), 
-                             now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
-                             tm.Location())
-        }
-    }
 
     // 4. Inherit the year-month/time/loc, parsing the day.
     fmts = []string{"02", "_2"}
     for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
+        time_fmt := " 15:04:05.999999999 MST"
+        tfmt1 := "2006-01-" + tfmt + time_fmt
+        tdatetime1 := now.Format("2006-01-") + datetime + now.Format(time_fmt)
+        tm1, ok := time.Parse(tfmt1, tdatetime1)
         if ok == nil {
-            return time.Date(now.Year(), now.Month(), tm.Day(), 
-                             now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
-                             now.Location())
+            return tm1
+        }
+
+        tfmt2 := tfmt + " Jan 2006" + time_fmt
+        tdatetime2 := datetime + now.Format(" Jan 2006" + time_fmt)
+        tm2, ok := time.Parse(tfmt2, tdatetime2)
+        if ok == nil {
+            return tm2
         }
     }
 
+    // Magic Day of week stuff.. Same as 5 above, except work out date from Day
     // 5. Parsing the dayname/time/loc work out the date.
-    fmts = []string{"Monday " + time.Kitchen + " MST",
-                    "Monday 15:04:05 MST",   "Monday 15:04 MST",
-                    "Monday " + time.Kitchen + "Z07:00",
-                    "Monday 15:04:05Z07:00", "Monday 15:04Z07:00",
-                    "Monday " + time.Kitchen + " -0700",
-                    "Monday 15:04:05 -0700", "Monday 15:04 -0700"}
-    fmts = []string{"Monday 15:04:05 MST", "Monday 15:04 MST"}
+    fmts = []string{time.Kitchen + " MST", "15:04:05 MST", "15:04 MST",
+                    time.Kitchen + "Z07:00", "15:04:05Z07:00", "15:04Z07:00",
+                    time.Kitchen + " -0700", "15:04:05 -0700", "15:04 -0700"}
     for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
+        tfmt = "2006-01-02 Monday " + tfmt
+        tdatetime := now.Format("2006-01-02 ") + datetime
+        tm, ok := time.Parse(tfmt, tdatetime)
         if ok == nil {
-            ctm := time.Date(now.Year(), now.Month(), now.Day(),
-                             tm.Hour(), tm.Minute(), tm.Second(), now.Nanosecond(),
-                             tm.Location())
-            return calc_weekday(datetime, ctm)
+            return calc_weekday(datetime, tm)
         }
     }
 
+    // Magic Day of week stuff.. Same as 6 above, except work out date from Day
     // 6. Inherit the loc, parsing the dayname/time work out the date.
-    fmts = []string{"Monday " + time.Kitchen, "Monday 15:04:05", "Monday 15:04"}
+    fmts = []string{time.Kitchen, "15:04:05", "15:04"}
     for _, tfmt := range fmts {
-        tm, ok := time.Parse(tfmt, datetime)
+        tfmt = "2006-01-02 Monday " + tfmt + " MST"
+        tdatetime := now.Format("2006-01-02 ") + datetime + now.Format(" MST")
+        tm, ok := time.Parse(tfmt, tdatetime)
         if ok == nil {
-            ctm := time.Date(now.Year(), now.Month(), now.Day(),
-                             tm.Hour(), tm.Minute(), tm.Second(), now.Nanosecond(),
-                             now.Location())
-            return calc_weekday(datetime, ctm)
+            return calc_weekday(datetime, tm)
         }
     }
 
@@ -213,10 +203,7 @@ func ptime(now time.Time, datetime string) time.Time {
     for _, tfmt := range fmts {
         _, ok := time.Parse(tfmt, datetime)
         if ok == nil {
-            ctm := time.Date(now.Year(), now.Month(), now.Day(),
-                             now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
-                             now.Location())
-            return calc_weekday(datetime, ctm)
+            return calc_weekday(datetime, now)
         }
     }
 
