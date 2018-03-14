@@ -38,11 +38,14 @@ func calc_weekday(datetime string, tm time.Time) time.Time {
     otm := tm
     num := 0
     d, _ := time.ParseDuration("24h")
-    for !strings.HasPrefix(datetime, tm.Weekday().String())  {
+    day_s := tm.Format("Mon")
+    for !strings.HasPrefix(datetime, day_s) &&
+        !strings.HasPrefix(datetime, tm.Weekday().String())  {
         tm = tm.Add(d)
         if num++; num >= 7 {
             return otm
         }
+        day_s = tm.Format("Mon")
     }
 
     return tm
@@ -185,6 +188,14 @@ func ptime(now time.Time, datetime string) time.Time {
             return calc_weekday(datetime, tm)
         }
     }
+    for _, tfmt := range fmts {
+        tfmt = "2006-01-02 Mon " + tfmt
+        tdatetime := now.Format("2006-01-02 ") + datetime
+        tm, ok := time.Parse(tfmt, tdatetime)
+        if ok == nil {
+            return calc_weekday(datetime, tm)
+        }
+    }
 
     // Magic Day of week stuff.. Same as 6 above, except work out date from Day
     // 6. Inherit the loc, parsing the dayname/time work out the date.
@@ -197,9 +208,17 @@ func ptime(now time.Time, datetime string) time.Time {
             return calc_weekday(datetime, tm)
         }
     }
+    for _, tfmt := range fmts {
+        tfmt = "2006-01-02 Mon " + tfmt + " MST"
+        tdatetime := now.Format("2006-01-02 ") + datetime + now.Format(" MST")
+        tm, ok := time.Parse(tfmt, tdatetime)
+        if ok == nil {
+            return calc_weekday(datetime, tm)
+        }
+    }
 
     // 7. Inherit the loc/time, parsing the dayname work out the date.
-    fmts = []string{"Monday"}
+    fmts = []string{"Monday", "Mon"}
     for _, tfmt := range fmts {
         _, ok := time.Parse(tfmt, datetime)
         if ok == nil {
