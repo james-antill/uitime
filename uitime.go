@@ -5,6 +5,7 @@ import (
     "fmt"
     "os"
     "sort"
+    "strconv"
     "strings"
     "time"
     "golang.org/x/crypto/ssh/terminal"
@@ -51,7 +52,42 @@ func calc_weekday(datetime string, tm time.Time) time.Time {
     return tm
 }
 
+func parseEpoch(datetime string) (int64, error) {
+    switch {
+        case strings.HasSuffix(datetime, "ms"):
+            datetime = datetime[:len(datetime)-2]
+            if epoch, err := strconv.ParseInt(datetime, 0, 64); err == nil {
+                return epoch*1000*1000, nil
+            }
+        case strings.HasSuffix(datetime, "ns"):
+            datetime = datetime[:len(datetime)-2]
+            if epoch, err := strconv.ParseInt(datetime, 0, 64); err == nil {
+                return epoch, nil
+            }
+        case strings.HasSuffix(datetime, "us"):
+            datetime = datetime[:len(datetime)-2]
+            if epoch, err := strconv.ParseInt(datetime, 0, 64); err == nil {
+                return epoch*1000, nil
+            }
+        case strings.HasSuffix(datetime, "s"):
+            datetime = datetime[:len(datetime)-1]
+            if epoch, err := strconv.ParseInt(datetime, 0, 64); err == nil {
+                return epoch*1000*1000*1000, nil
+            }
+        default: // Default seconds...
+            if epoch, err := strconv.ParseInt(datetime, 0, 64); err == nil {
+                return epoch*1000*1000*1000, nil
+            }
+    }
+    return 0, fmt.Errorf("Not epoch number")
+}
+
 func ptime(now time.Time, datetime string) time.Time {
+    // 0. Try an Epoch
+    if epochns, err := parseEpoch(datetime); err == nil {
+        return time.Unix(0, epochns)
+    }
+
     // 1. First try full date/time/loc stamps and just use them
     fmts := []string{"2006-01-02 15:04", "2006-01-02 15:04:05",
                      "2006-01-02T15:04", "2006-01-02T15:04:05",
