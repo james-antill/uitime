@@ -93,8 +93,8 @@ func ptime(now time.Time, datetime string) time.Time {
     }
 
     // 1. First try full date/time/loc stamps and just use them
-    fmts := []string{"2006-01-02 15:04", "2006-01-02 15:04:05",
-                     "2006-01-02T15:04", "2006-01-02T15:04:05",
+    fmts := []string{"2006-01-02 15:04 MST", "2006-01-02 15:04:05 MST",
+                     "2006-01-02T15:04 MST", "2006-01-02T15:04:05 MST",
                      time.RFC3339,
                      time.UnixDate,
                      time.RFC822, time.RFC822Z,
@@ -506,6 +506,42 @@ func cotime(local *bool, short *string, pduration *time.Duration,
     alltime(now, datetime, *pduration, tzs)
 }
 
+// This is stupid, but .Parse() just gets the name *sigh*.
+func ptime2tztime(tm time.Time) time.Time {
+    if tm.Location().String() == "UTC" { return tm }
+
+    // This needs more abbreviations...
+    // https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
+    n2loc := map[string]string{"PDT" : "US/Pacific",
+                               "PST" : "US/Pacific",
+                               "EDT" : "US/Eastern",
+                               "EST" : "US/Eastern",
+                               "BST" : "Europe/London",
+                               "GMT" : "Europe/London",
+                               "CEST" : "Europe/Berlin",
+                               "CET" : "Europe/Berlin",
+                               "IST" : "Asia/Calcutta",
+                               "HKT" : "Asia/Hong_Kong",
+                               "JST" : "Asia/Tokyo",
+                               "AEST" : "Australia/Brisbane",
+                               }
+
+
+    if _, ok := n2loc[tm.Location().String()]; !ok {
+        return tm
+    }
+
+    loc, err := time.LoadLocation(n2loc[tm.Location().String()])
+    if err != nil {
+        fmt.Fprintln(os.Stderr, "Warning:", err)
+        return tm
+    } // Give up.
+
+    return time.Date(tm.Year(), tm.Month(), tm.Day(),
+                     tm.Hour(), tm.Minute(), tm.Second(), tm.Nanosecond(),
+                     loc)
+}
+
 func main() {
     pduration := flag.Duration("duration", 0, "Add a duration to the given date")
     short := flag.String("short", "", "Just print a single zone and UTC")
@@ -534,6 +570,7 @@ func main() {
             datetime = datetime.Add(d)
         } else {
             datetime = ptime(now, arg)
+            datetime = ptime2tztime(datetime)
             if debug_flag {
                 fmt.Fprintln(os.Stderr, "JDBG: datetime:", datetime)
             }
